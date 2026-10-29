@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>04 自訂工具列與語系 - ERPEditor</title>
+    <link rel="stylesheet" href="examples.css">
+    <link rel="stylesheet" href="../dist/erp-editor.min.css">
+    <style>
+        /* 用 CSS 變數換配色：只影響 .brand 這個編輯器 */
+        .erp-editor.brand {
+            --erp-editor-border: #f08c00;
+            --erp-editor-toolbar-bg: #fff4e6;
+            --erp-editor-active-bg: #ffe8cc;
+            --erp-editor-active-color: #d9480f;
+            --erp-editor-focus: rgba(240, 140, 0, .3);
+            --erp-editor-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+    <a class="back" href="index.html">← 範例列表</a>
+    <h1>04 自訂工具列、語系、顏色與主題</h1>
+
+    <h3>精簡工具列（留言、備註欄位）</h3>
+    <div id="mini"></div>
+
+    <h3>English UI</h3>
+    <div id="english"></div>
+
+    <h3>自訂調色盤 + 品牌配色</h3>
+    <div id="brand"></div>
+
+    <h3>強制深色主題（data-theme="dark"）</h3>
+    <div id="dark" data-theme="dark"></div>
+
+    <h3>自訂語系文字</h3>
+    <div id="custom-lang"></div>
+
+    <script src="../dist/erp-editor.min.js"></script>
+    <script>
+        // toolbar 是「群組」陣列，每個群組之間有分隔線
+        ERPEditor.create('#mini', {
+            height: 100,
+            placeholder: '留言…',
+            toolbar: [['bold', 'italic', 'underline'], ['insertUnorderedList', 'createLink'], ['undo', 'redo']]
+        });
+
+        ERPEditor.create('#english', {
+            lang: 'en',
+            height: 120,
+            placeholder: 'Write something…'
+        });
+
+        var brand = ERPEditor.create('#brand', {
+            height: 120,
+            colors: ['#d9480f', '#f08c00', '#fab005', '#212529', '#868e96', '#ffffff'],
+            toolbar: [['formatBlock'], ['bold', 'italic', 'foreColor', 'hiliteColor'], ['justifyLeft', 'justifyCenter'], ['source']]
+        });
+        brand.root.classList.add('brand');
+        brand.root.setAttribute('data-theme', 'light');   // 品牌配色是淺色系，不跟系統深色模式
+
+        ERPEditor.create('#dark', { height: 120, placeholder: '深色主題' });
+
+        // lang 也可以傳物件，只覆寫想改的文字；沒寫的沿用繁體中文
+        ERPEditor.create('#custom-lang', {
+            height: 100,
+            toolbar: [['bold', 'createLink', 'insertImage']],
+            lang: { bold: '加粗', createLink: '加入超連結', promptLink: '請貼上網址：', insertImage: '放一張圖' }
+        });
+    </script>
+</body>
+</html>

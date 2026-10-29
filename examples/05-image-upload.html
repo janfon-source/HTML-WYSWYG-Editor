@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>05 圖片上傳與自訂對話框 - ERPEditor</title>
+    <link rel="stylesheet" href="examples.css">
+    <link rel="stylesheet" href="../dist/erp-editor.min.css">
+    <style>
+        dialog { border: 1px solid #adb5bd; border-radius: 10px; padding: 20px; width: min(420px, 90vw); }
+        dialog::backdrop { background: rgba(0, 0, 0, .35); }
+        .status { font-size: .9rem; color: #6c757d; min-height: 1.5em; }
+    </style>
+</head>
+<body>
+    <a class="back" href="index.html">← 範例列表</a>
+    <h1>05 圖片上傳與自訂對話框</h1>
+    <p class="lead">設定 <code>imageUpload</code> 後，可以直接<b>貼上截圖</b>或<b>拖放圖片檔</b>到編輯區；
+        <code>promptLink</code> 等選項可換掉瀏覽器內建的 <code>prompt()</code>。</p>
+
+    <div id="editor"><p>把圖片拖進來，或按 Cmd/Ctrl+V 貼上截圖。按 Ctrl+K 插入連結。</p></div>
+    <div class="status" id="status"></div>
+
+    <dialog id="link-dialog">
+        <form method="dialog">
+            <label for="link-url">連結網址</label>
+            <input type="text" id="link-url" placeholder="https://">
+            <div class="row" style="justify-content: flex-end">
+                <button class="demo" value="cancel">取消</button>
+                <button class="demo primary" value="ok">插入</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="../dist/erp-editor.min.js"></script>
+    <script>
+        var statusEl = document.getElementById('status');
+
+        // 示範用：把檔案轉成 data URL。實際使用請換成上傳到後端，回傳圖片網址（見下方註解）
+        function uploadImage(file) {
+            if (file.size > 2 * 1024 * 1024) {
+                return Promise.reject(new Error('圖片不可超過 2MB'));
+            }
+            statusEl.textContent = '上傳中：' + file.name;
+            return new Promise(function (resolve, reject) {
+                var reader = new FileReader();
+                reader.onload = function () {
+                    setTimeout(function () {           // 模擬網路延遲
+                        statusEl.textContent = '完成：' + file.name;
+                        resolve(reader.result);
+                    }, 400);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+
+            /* 實際上傳到後端的寫法：
+            var fd = new FormData();
+            fd.append('file', file);
+            return fetch('/ajax/upload_image.php', { method: 'POST', body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (data) { return data.url; });   // 回傳的網址會被插入成 <img src>
+            */
+        }
+
+        // 回傳 Promise，用自己的 <dialog> 取代 window.prompt()
+        function askLink(defaultUrl) {
+            var dlg = document.getElementById('link-dialog');
+            var input = document.getElementById('link-url');
+            input.value = defaultUrl;
+            dlg.showModal();
+            input.select();
+            return new Promise(function (resolve) {
+                dlg.addEventListener('close', function onClose() {
+                    dlg.removeEventListener('close', onClose);
+                    resolve(dlg.returnValue === 'ok' ? input.value : null);
+                });
+            });
+        }
+
+        var editor = ERPEditor.create('#editor', {
+            height: 260,
+            imageUpload: uploadImage,
+            promptLink: askLink,
+            // 表格大小也可以不問，固定 3x4
+            promptTable: function () { return { rows: 3, cols: 4 }; }
+        });
+
+        editor.on('error', function (err) {
+            statusEl.textContent = '錯誤：' + (err && err.message || err);
+        });
+    </script>
+</body>
+</html>

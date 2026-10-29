@@ -1,0 +1,36 @@
+{
+  "name": "erp-editor",
+  "version": "1.0.0",
+  "description": "Lightweight, dependency-free WYSIWYG editor with a built-in HTML sanitizer (JS + PHP). 輕量、零相依的所見即所得編輯器。",
+  "main": "dist/erp-editor.js",
+  "browser": "dist/erp-editor.min.js",
+  "style": "dist/erp-editor.css",
+  "files": [
+    "dist/",
+    "src/",
+    "php/",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "node scripts/build.js",
+    "test": "node scripts/test.js",
+    "serve": "python3 -m http.server 8090"
+  },
+  "keywords": [
+    "wysiwyg",
+    "editor",
+    "rich-text",
+    "contenteditable",
+    "sanitizer",
+    "html",
+    "zh-TW"
+  ],
+  "author": "Jeff Lee",
+  "license": "MIT",
+  "devDependencies": {
+    "terser": "^5.51.2"
+  }
+}

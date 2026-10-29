@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>01 基本使用 - ERPEditor</title>
+    <link rel="stylesheet" href="examples.css">
+    <!-- 1. 載入 CSS -->
+    <link rel="stylesheet" href="../dist/erp-editor.min.css">
+</head>
+<body>
+    <a class="back" href="index.html">← 範例列表</a>
+    <h1>01 基本使用</h1>
+    <p class="lead">準備一個空的 div，呼叫 <code>ERPEditor.create()</code> 就完成了。</p>
+
+    <!-- 2. 放一個容器；裡面原有的 HTML 會成為初始內容 -->
+    <div id="editor"><p>試著<b>選取文字</b>，再按工具列的按鈕。</p></div>
+
+    <div class="row">
+        <button class="demo primary" id="btn-get">取得 HTML</button>
+    </div>
+    <pre class="out" id="out"></pre>
+
+    <!-- 3. 載入 JS -->
+    <script src="../dist/erp-editor.min.js"></script>
+    <script>
+        // 4. 建立編輯器
+        var editor = ERPEditor.create('#editor', {
+            placeholder: '請輸入內容…',
+            height: 240
+        });
+
+        document.getElementById('btn-get').addEventListener('click', function () {
+            document.getElementById('out').textContent = editor.getHTML();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>03 API 與事件 - ERPEditor</title>
+    <link rel="stylesheet" href="examples.css">
+    <link rel="stylesheet" href="../dist/erp-editor.min.css">
+    <style>
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+        .preview { border: 1px dashed #adb5bd; border-radius: 6px; padding: 12px 16px; min-height: 200px; }
+        .counter { color: #6c757d; font-size: .9rem; }
+    </style>
+</head>
+<body>
+    <a class="back" href="index.html">← 範例列表</a>
+    <h1>03 API 與事件</h1>
+    <p class="lead">用程式讀寫內容、監聽 change 事件做即時預覽與字數統計。</p>
+
+    <div class="row">
+        <button class="demo" data-act="load">載入範本</button>
+        <button class="demo" data-act="insert">在游標處插入</button>
+        <button class="demo" data-act="bold">exec('bold')</button>
+        <button class="demo" data-act="clear">清空</button>
+        <button class="demo" data-act="readonly">切換唯讀</button>
+        <button class="demo" data-act="source">切換原始碼</button>
+        <button class="demo" data-act="destroy">destroy / 重建</button>
+    </div>
+
+    <div class="grid">
+        <div>
+            <div id="editor"></div>
+            <div class="counter" id="counter"></div>
+        </div>
+        <div>
+            <!-- 顯示端套用 .erp-editor-content，讓圖片、表格、引言樣式一致 -->
+            <div class="preview erp-editor-content" id="preview"></div>
+        </div>
+    </div>
+
+    <p>事件紀錄：</p>
+    <pre class="out" id="log"></pre>
+
+    <script src="../dist/erp-editor.min.js"></script>
+    <script>
+        var TEMPLATE =
+            '<h2>會議紀錄</h2>' +
+            '<p><b>日期：</b>2026-10-29　<b>地點：</b>301 會議室</p>' +
+            '<ol><li>上月營收檢討</li><li>新案進度</li></ol>' +
+            '<blockquote>下次會議改到週四。</blockquote>';
+
+        var logEl = document.getElementById('log');
+        function log(msg) {
+            logEl.textContent = new Date().toLocaleTimeString() + '  ' + msg + '\n' + logEl.textContent.split('\n').slice(0, 8).join('\n');
+        }
+
+        function render(html, ed) {
+            document.getElementById('preview').innerHTML = html;   // getHTML() 已過濾，可直接顯示
+            document.getElementById('counter').textContent = ed.getText().length + ' 字';
+        }
+
+        var editor;
+        function build() {
+            editor = ERPEditor.create('#editor', {
+                placeholder: '在這裡輸入，右邊會即時預覽',
+                height: 220,
+                maxHeight: 420,
+                onChange: render,
+                onReady: function (ed) { log('ready'); }
+            });
+            editor.on('focus', function () { log('focus'); });
+            editor.on('blur', function () { log('blur'); });
+            editor.on('change', function (html) { log('change (' + html.length + ' chars)'); });
+            render(editor.getHTML(), editor);
+        }
+        build();
+
+        document.querySelectorAll('[data-act]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                switch (btn.dataset.act) {
+                    case 'load': editor.setHTML(TEMPLATE); break;
+                    case 'insert': editor.insertHTML('<span style="color: #e03131">【插入的文字】</span>'); break;
+                    case 'bold': editor.exec('bold'); break;
+                    case 'clear': editor.clear(); break;
+                    case 'readonly': editor.setReadOnly(!editor.readOnly); log('readOnly = ' + editor.readOnly); break;
+                    case 'source': editor.toggleSource(); break;
+                    case 'destroy':
+                        var html = editor.destroy();
+                        log('destroyed, 1 秒後重建');
+                        setTimeout(build, 1000);
+                        break;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

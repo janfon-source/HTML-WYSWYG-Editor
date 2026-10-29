@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ERPEditor tests</title>
+    <link rel="stylesheet" href="../src/erp-editor.css">
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 24px; }
+        .pass { color: #2f9e44; }
+        .fail { color: #e03131; font-weight: bold; }
+        #sandbox { position: absolute; left: -9999px; width: 600px; }
+        pre { white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>ERPEditor tests</h1>
+    <p>用 <code>npm test</code>（headless Chrome）或 <code>npm run serve</code> 後開啟 <code>http://localhost:8090/test/</code>。</p>
+    <ul id="list"></ul>
+    <pre id="result">RUNNING</pre>
+    <div id="sandbox"></div>
+
+    <script src="../src/erp-editor.js"></script>
+    <script>
+    (async function () {
+        var results = [];
+        function check(name, ok, detail) {
+            results.push({ name: name, ok: !!ok, detail: detail || '' });
+        }
+        function fresh(html, tag) {
+            var box = document.getElementById('sandbox');
+            var node = document.createElement(tag || 'div');
+            if (html != null) { if (node.tagName === 'TEXTAREA') node.value = html; else node.innerHTML = html; }
+            box.appendChild(node);
+            return node;
+        }
+        function selectAll(node) {
+            var r = document.createRange();
+            r.selectNodeContents(node);
+            var s = window.getSelection();
+            s.removeAllRanges();
+            s.addRange(r);
+        }
+
+        try {
+            // ---------- sanitizer：與 PHP 共用的 cases ----------
+            var cases = await (await fetch('cases.json')).json();
+            cases.forEach(function (c) {
+                var out = ERPEditor.sanitize(c.input);
+                var miss = c.contains.filter(function (s) { return out.indexOf(s) < 0; });
+                var bad = c.notContains.filter(function (s) { return out.toLowerCase().indexOf(s.toLowerCase()) >= 0; });
+                check('sanitize: ' + c.name, !miss.length && !bad.length, out);
+            });
+
+            // ---------- API ----------
+            check('globals exported', typeof ERPEditor.create === 'function' && typeof window.ERP_editor === 'function' && typeof window.erp_editor_sanitize === 'function');
+
+            var n1 = fresh('<p>初始<b>內容</b></p>');
+            var ed = ERPEditor.create(n1, { placeholder: 'type here' });
+            check('reads initial HTML from element', ed.getHTML() === '<p>初始<b>內容</b></p>', ed.getHTML());
+            check('create() returns same instance', ERPEditor.create(n1) === ed && ERPEditor.get(n1) === ed);
+            check('builds toolbar', n1.querySelectorAll('.erp-editor-toolbar button').length > 20);
+            check('accepts selector string', ERPEditor.create('#nope') === null);
+
+            ed.setHTML('<p onclick="x()">a</p><script>bad()<\/script>');
+            check('setHTML sanitizes', ed.getHTML() === '<p>a</p>', ed.getHTML());
+
+            ed.clear();
+            check('clear + isEmpty', ed.getHTML() === '' && ed.isEmpty());
+            check('placeholder class when empty', ed.area.classList.contains('is-empty'));
+            ed.setHTML('<p><img src="a.png"></p>');
+            check('image counts as not empty', !ed.isEmpty());
+
+            ed.setHTML('<p>Hello world</p>');
+            check('getText', ed.getText() === 'Hello world');
+
+            // change event
+            var changes = [];
+            ed.on('change', function (html) { changes.push(html); });
+            ed.setHTML('<p>changed</p>');
+            ed.setHTML('<p>silent</p>', true);
+            check('change event fires (not when silent)', changes.length === 1 && changes[0] === '<p>changed</p>', JSON.stringify(changes));
+
+            // exec bold on selection
+            ed.setHTML('<p>bold me</p>', true);
+            ed.area.focus();
+            selectAll(ed.area.querySelector('p'));
+            ed._saveRange();
+            ed.exec('bold');
+            check('exec("bold") wraps selection', /<(b|strong)>bold me<\/(b|strong)>/.test(ed.getHTML()), ed.getHTML());
+
+            // insertHTML
+            ed.setHTML('<p>x</p>', true);
+            ed.area.focus();
+            var r = document.createRange(); r.selectNodeContents(ed.area.querySelector('p')); r.collapse(false);
+            ed.savedRange = r;
+            ed.insertHTML('<b>y</b><img src=x onerror=alert(1)>');
+            check('insertHTML sanitizes', /<b>y<\/b>/.test(ed.getHTML()) && ed.getHTML().indexOf('onerror') < 0, ed.getHTML());
+
+            // link with value
+            ed.setHTML('<p>link</p>', true);
+            ed.area.focus();
+            selectAll(ed.area.querySelector('p'));
+            ed._saveRange();
+            ed.exec('createLink', 'https://example.com');
+            check('createLink adds target and rel', /href="https:\/\/example.com"/.test(ed.getHTML()) && /rel="noopener noreferrer"/.test(ed.getHTML()), ed.getHTML());
+            ed.setHTML('<p>j</p>', true);
+            selectAll(ed.area.querySelector('p'));
+            ed._saveRange();
+            ed.exec('createLink', 'javascript:alert(1)');
+            check('createLink refuses javascript:', ed.getHTML() === '<p>j</p>', ed.getHTML());
+
+            // table
+            ed.setHTML('<p>t</p>', true);
+            ed.area.focus();
+            var r2 = document.createRange(); r2.selectNodeContents(ed.area.querySelector('p')); r2.collapse(false);
+            ed.savedRange = r2;
+            ed.exec('insertTable', { rows: 2, cols: 3 });
+            var tb = ed.area.querySelector('table');
+            check('insertTable 2x3', tb && tb.rows.length === 2 && tb.rows[0].cells.length === 3);
+
+            // source mode
+            ed.setHTML('<p>src</p>', true);
+            ed.toggleSource(true);
+            check('source mode shows HTML', ed.source.value === '<p>src</p>' && ed.area.style.display === 'none');
+            check('source mode disables other buttons', ed.toolbar.querySelector('[data-cmd="bold"]').disabled && !ed.toolbar.querySelector('[data-cmd="source"]').disabled);
+            ed.source.value = '<h2>edited</h2><script>x<\/script>';
+            ed.toggleSource(false);
+            check('leaving source mode sanitizes', ed.getHTML() === '<h2>edited</h2>', ed.getHTML());
+
+            // read only
+            ed.setReadOnly(true);
+            check('readOnly', ed.area.getAttribute('contenteditable') === 'false' && ed.toolbar.querySelector('[data-cmd="bold"]').disabled && ed.toolbar.querySelector('[data-cmd="source"]').disabled);
+            ed.toggleSource(true); ed.toggleSource(false);
+            check('readOnly survives source toggle', ed.toolbar.querySelector('[data-cmd="bold"]').disabled);
+            ed.setReadOnly(false);
+            check('readOnly off', ed.area.getAttribute('contenteditable') === 'true' && !ed.toolbar.querySelector('[data-cmd="bold"]').disabled);
+
+            // destroy (div)
+            ed.setHTML('<p>final</p>', true);
+            var html = ed.destroy();
+            check('destroy restores element content', html === '<p>final</p>' && n1.innerHTML === '<p>final</p>' && !n1.classList.contains('erp-editor') && !ERPEditor.get(n1));
+
+            // textarea binding
+            var form = fresh(null, 'form');
+            var ta = document.createElement('textarea');
+            ta.name = 'content';
+            ta.value = '<p>from textarea</p>';
+            form.appendChild(ta);
+            var ed2 = ERPEditor.create(ta);
+            check('textarea: hidden and initial value loaded', ta.style.display === 'none' && ed2.getHTML() === '<p>from textarea</p>');
+            ed2.setHTML('<p>new <i>value</i></p>');
+            check('textarea: synced on change', ta.value === '<p>new <i>value</i></p>', ta.value);
+            check('textarea: FormData has content', new FormData(form).get('content') === '<p>new <i>value</i></p>');
+            ed2.area.innerHTML = '<p>typed</p>';
+            ed2.area.dispatchEvent(new Event('input'));
+            check('textarea: synced on input', ta.value === '<p>typed</p>', ta.value);
+            ed2.destroy();
+            check('textarea: destroy shows textarea again', ta.style.display === '' && !form.querySelector('.erp-editor'));
+
+            // custom toolbar + language
+            var ed3 = ERPEditor.create(fresh(''), { toolbar: [['bold', 'italic'], ['source']], lang: 'en' });
+            check('custom toolbar', ed3.toolbar.querySelectorAll('button').length === 3 && !ed3.toolbar.querySelector('select'));
+            check('english labels', ed3.toolbar.querySelector('[data-cmd="bold"]').getAttribute('aria-label') === 'Bold');
+            var ed4 = ERPEditor.create(fresh(''), { toolbar: [] });
+            check('empty toolbar hidden', !ed4.root.querySelector('.erp-editor-toolbar'));
+
+            // custom prompt hook (async)
+            var ed5 = ERPEditor.create(fresh('<p>pic</p>'), { promptImage: function () { return Promise.resolve('https://example.com/a.png'); } });
+            ed5.area.focus();
+            var r3 = document.createRange(); r3.selectNodeContents(ed5.area.querySelector('p')); r3.collapse(false);
+            ed5.savedRange = r3;
+            ed5.exec('insertImage');
+            await new Promise(function (res) { setTimeout(res, 20); });
+            check('promptImage hook inserts image', /<img src="https:\/\/example.com\/a.png"/.test(ed5.getHTML()), ed5.getHTML());
+
+            // fullscreen
+            ed5.toggleFullscreen(true);
+            check('fullscreen on', ed5.root.classList.contains('is-fullscreen') && document.documentElement.classList.contains('erp-editor-noscroll'));
+            ed5.toggleFullscreen(false);
+            check('fullscreen off', !ed5.root.classList.contains('is-fullscreen') && !document.documentElement.classList.contains('erp-editor-noscroll'));
+        } catch (err) {
+            check('no exception', false, String(err && err.stack || err));
+        }
+
+        var list = document.getElementById('list');
+        results.forEach(function (r) {
+            var li = document.createElement('li');
+            li.className = r.ok ? 'pass' : 'fail';
+            li.textContent = (r.ok ? 'PASS ' : 'FAIL ') + r.name + (r.ok ? '' : '  →  ' + r.detail);
+            list.appendChild(li);
+        });
+        var failed = results.filter(function (r) { return !r.ok; });
+        document.getElementById('result').textContent =
+            'RESULT ' + (results.length - failed.length) + ' passed, ' + failed.length + ' failed\n' +
+            failed.map(function (f) { return 'FAIL ' + f.name + ' :: ' + f.detail; }).join('\n');
+    })();
+    </script>
+</body>
+</html>

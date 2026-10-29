@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>02 綁定 textarea - ERPEditor</title>
+    <link rel="stylesheet" href="examples.css">
+    <link rel="stylesheet" href="../dist/erp-editor.min.css">
+</head>
+<body>
+    <a class="back" href="index.html">← 範例列表</a>
+    <h1>02 綁定 textarea 與表單送出</h1>
+    <p class="lead">直接在 <code>&lt;textarea&gt;</code> 上建立編輯器：textarea 會被隱藏，內容隨時同步，表單送出時就帶著 HTML。</p>
+
+    <form id="post-form" action="#" method="post">
+        <label for="title">標題</label>
+        <input type="text" id="title" name="title" value="系統維護公告">
+
+        <label for="content">內容</label>
+        <textarea id="content" name="content"><p>本週六 <b>22:00–24:00</b> 進行系統維護。</p></textarea>
+
+        <div class="row">
+            <button class="demo primary" type="submit">送出</button>
+            <button class="demo" type="reset" id="btn-reset">重設</button>
+        </div>
+    </form>
+
+    <p>送出的資料（示範用，攔截 submit 後顯示 FormData）：</p>
+    <pre class="out" id="out"></pre>
+
+    <script src="../dist/erp-editor.min.js"></script>
+    <script>
+        var editor = ERPEditor.create('#content', { height: 200 });
+        var form = document.getElementById('post-form');
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();   // 實際使用時拿掉這行，表單就會正常送到 action
+
+            if (editor.isEmpty()) {
+                alert('請輸入內容');
+                editor.focus();
+                return;
+            }
+            var data = {};
+            new FormData(form).forEach(function (v, k) { data[k] = v; });
+            document.getElementById('out').textContent = JSON.stringify(data, null, 2);
+        });
+
+        // form.reset() 只會還原 textarea 的值，編輯器要自己同步
+        form.addEventListener('reset', function () {
+            setTimeout(function () { editor.setHTML(document.getElementById('content').value); });
+        });
+    </script>
+</body>
+</html>
