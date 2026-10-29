@@ -1,4 +1,6 @@
-# ERPEditor
+# HTML WYSWYG Editor
+
+Version 2026.a29. The library is called `ERPEditor` in code (global `ERPEditor`, npm name `erp-editor`).
 
 A lightweight, dependency-free WYSIWYG editor for admin panels and business systems, with a built-in HTML sanitizer that has a matching PHP version.
 
@@ -16,7 +18,7 @@ A lightweight, dependency-free WYSIWYG editor for admin panels and business syst
 cp dist/erp-editor.min.js dist/erp-editor.min.css  your-site/assets/
 
 # or as a local npm dependency
-npm install /path/to/WYSWYG_Editor
+npm install github:janfon-source/HTML-WYSWYG-Editor
 ```
 
 ```html
@@ -86,6 +88,8 @@ MIT. Icons are from [Bootstrap Icons](https://icons.getbootstrap.com) (MIT); see
 
 # 中文說明
 
+版本 2026.a29。程式裡的名稱是 `ERPEditor`（全域變數 `ERPEditor`，npm 套件名 `erp-editor`）。
+
 輕量、零相依的所見即所得（WYSIWYG）編輯器，適合後台管理系統、ERP 的公告、備註、內容編輯，並內建前後端一致的 HTML 安全過濾。
 
 - **零相依**：純 JavaScript（UMD），`<script>`、webpack／Vite `import`、`require()` 都能用；jQuery、Bootstrap 都不是必要。
@@ -102,7 +106,7 @@ MIT. Icons are from [Bootstrap Icons](https://icons.getbootstrap.com) (MIT); see
 cp dist/erp-editor.min.js dist/erp-editor.min.css  你的網站/assets/
 
 # 或用 npm 安裝本機套件
-npm install /path/to/WYSWYG_Editor
+npm install github:janfon-source/HTML-WYSWYG-Editor
 ```
 
 ```html

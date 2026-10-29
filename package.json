@@ -1,6 +1,7 @@
 {
   "name": "erp-editor",
-  "version": "1.0.0",
+  "version": "2026.29.0",
+  "repository": "github:janfon-source/HTML-WYSWYG-Editor",
   "description": "Lightweight, dependency-free WYSIWYG editor with a built-in HTML sanitizer (JS + PHP). 輕量、零相依的所見即所得編輯器。",
   "main": "dist/erp-editor.js",
   "browser": "dist/erp-editor.min.js",

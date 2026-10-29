@@ -1,5 +1,5 @@
 /*!
- * ERPEditor v1.0.0 — lightweight, dependency-free WYSIWYG editor
+ * ERPEditor v2026.a29 — lightweight, dependency-free WYSIWYG editor
  * Icons: Bootstrap Icons (MIT, https://icons.getbootstrap.com)
  */
 (function (root, factory) {
@@ -16,7 +16,7 @@
 }(typeof self !== 'undefined' ? self : this, function () {
     'use strict';
 
-    var VERSION = '1.0.0';
+    var VERSION = '2026.a29';
 
     /* ------------------------------------------------------------------
        Icons (Bootstrap Icons, viewBox 0 0 16 16)

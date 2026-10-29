@@ -1,6 +1,6 @@
 # ERPEditor API 參考
 
-版本 1.0.0
+版本 2026.a29
 
 - [全域物件](#全域物件)
 - [選項 options](#選項-options)

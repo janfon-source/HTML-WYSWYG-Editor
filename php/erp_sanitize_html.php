@@ -1,6 +1,6 @@
 <?php
 /**
- * ERPEditor v1.0.0 — 後端 HTML 白名單過濾
+ * ERPEditor v2026.a29 — 後端 HTML 白名單過濾
  *
  * 規則與前端 src/erp-editor.js 的 ERPEditor.sanitize() 相同；修改允許的 tag / attribute 時兩邊要一起改。
  * 需求：PHP 7.1+，建議安裝 DOM extension（php-xml），沒有時會改用較保守的 regex 備援。

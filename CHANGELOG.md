@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0 — 2026-10-29
+## 2026.a29 — 2026-10-29
 
 第一個獨立版本，由 Ahead ERP 內建的 `core/ERP_editor.js` 改寫而來。
 
